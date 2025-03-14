@@ -220,7 +220,7 @@
       let statusFollow = new Set();
 
       data.forEach(row => {
-        marcas.add(row[0]);
+        marcas.add(row[3]);
         statusFollow.add(row[1]);
       });
 
@@ -239,7 +239,7 @@
       const statusFilter = document.getElementById("filter-status").value;
 
       let filteredData = originalData.filter(row => 
-        (marcaFilter === "" || row[0] === marcaFilter) &&
+        (marcaFilter === "" || row[3] === marcaFilter) &&
         (statusFilter === "" || row[1] === statusFilter)
       );
 
