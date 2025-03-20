@@ -200,6 +200,7 @@
   <script>
     let originalData = [];
 
+    // Funções para exibir/ocultar o overlay de carregamento
     function showLoading() {
       document.getElementById("loading-overlay").classList.add("active");
     }
@@ -207,30 +208,33 @@
       document.getElementById("loading-overlay").classList.remove("active");
     }
 
+    // Função para buscar os dados da planilha
     async function fetchData() {
-      const response = await fetch("https://script.google.com/macros/s/AKfycbzfN49C9T9Wmhx2jT-oBPhTnutCMMimXROz4fEpRPU6VNUynb64ex_7sAj_dvNqbZPQ/exec");
-      const { headers, data } = await response.json();
-      const tableHead = document.querySelector("#table-headers");
-      
-      // Filtra linhas vazias
-      const filteredData = data.filter(row => row.some(cell => cell !== "" && cell !== null));
-      originalData = filteredData;
+      try {
+        const response = await fetch("https://script.google.com/macros/s/AKfycbxsHl90L0j4G8AJGUeg5tPFWEZhALd8CLS_foU2WB84vcusz74Ragf-9jxeOZt7ty0/exec");
+        const { headers, data } = await response.json();
+        const tableHead = document.querySelector("#table-headers");
+        
+        // Filtra linhas vazias
+        const filteredData = data.filter(row => row.some(cell => cell !== "" && cell !== null));
+        originalData = filteredData;
 
-      // Cria os cabeçalhos: adiciona "Ações" e "Observações" antes dos demais
-      tableHead.innerHTML = `<th>Ações</th><th>Observações</th>` + headers.map(header => `<th>${header}</th>`).join("");
-      populateFilters(filteredData);
-      updateTable(filteredData);
+        // Cria os cabeçalhos: adiciona "Ações" e "Observações" antes dos demais
+        tableHead.innerHTML = `<th>Ações</th><th>Observações</th>` + headers.map(header => `<th>${header}</th>`).join("");
+        populateFilters(filteredData);
+        updateTable(filteredData);
+      } catch (error) {
+        console.error("Erro ao buscar dados:", error);
+      }
     }
 
+    // Popula os filtros dinamicamente
     function populateFilters(data) {
       const marcaSelect = document.getElementById("filter-marca");
-
-      // Monta a lista de marcas dinamicamente
       let marcas = new Set();
       data.forEach(row => {
         marcas.add(row[2]);
       });
-
       marcaSelect.innerHTML = `<option value="">Todas</option>` + 
         [...marcas].map(marca => `<option value="${marca}">${marca}</option>`).join("");
 
@@ -239,6 +243,7 @@
       document.getElementById("filter-dep").addEventListener("change", filterTable);
     }
 
+    // Filtra os dados da tabela conforme os filtros selecionados
     function filterTable() {
       const marcaFilter = document.getElementById("filter-marca").value;
       const statusFilter = document.getElementById("filter-status").value;
@@ -279,6 +284,7 @@
       updateTable(filteredData);
     }
 
+    // Atualiza a tabela com os dados filtrados ou completos
     function updateTable(data) {
       const tableBody = document.querySelector("#data-table tbody");
       tableBody.innerHTML = data.map(row =>
@@ -299,6 +305,7 @@
       ).join("");
     }
 
+    // Evento do botão "Enviar" para enviar as atualizações
     document.getElementById("sendButton").addEventListener("click", async function() {
       const updates = [];
       const rows = document.querySelectorAll("#data-table tbody tr");
@@ -307,8 +314,10 @@
         const select = row.querySelector(".acoes-select");
         const acao = select.value;
         if (acao && ["SOLICITADO COMPRA", "MPOK", "MP EM TRÂNSITO"].includes(acao)) {
-          // Considerando que a chave esteja na célula de índice 25
-          const chave = row.cells[25].textContent.trim();
+          // Considerando que a chave esteja na célula de índice 22
+          const chave = row.cells[24] ? row.cells[24].textContent.trim() : "";
+          // Logger para exibir a chave no console
+          console.log("Chave selecionada:", chave);
           const observacao = row.querySelector(".obs-input").value;
           updates.push({ chave, status: acao, observacao });
         }
@@ -322,7 +331,7 @@
       showLoading();
 
       try {
-        const response = await fetch("https://script.google.com/macros/s/AKfycbzfN49C9T9Wmhx2jT-oBPhTnutCMMimXROz4fEpRPU6VNUynb64ex_7sAj_dvNqbZPQ/exec", {
+        await fetch("https://script.google.com/macros/s/AKfycbxsHl90L0j4G8AJGUeg5tPFWEZhALd8CLS_foU2WB84vcusz74Ragf-9jxeOZt7ty0/exec", {
           method: "POST",
           mode: "no-cors",
           headers: { "Content-Type": "application/json" },
@@ -337,6 +346,19 @@
       }
     });
 
+    // Medição do tempo de carregamento completo da página
+    window.addEventListener('load', () => {
+      // Método 1: Usando performance.now()
+      const loadTimeNow = performance.now();
+      console.log(`Tempo de carregamento (performance.now): ${loadTimeNow.toFixed(2)} ms`);
+
+      // Método 2: Usando Performance Timing API
+      const timing = window.performance.timing;
+      const loadTimeTiming = timing.loadEventEnd - timing.navigationStart;
+      console.log(`Tempo de carregamento (Performance Timing): ${loadTimeTiming} ms`);
+    });
+
+    // Inicia a busca dos dados
     fetchData();
   </script>
 </body>
